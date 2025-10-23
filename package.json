@@ -1,6 +1,6 @@
 {
   "name": "speed-docs-github-action",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "GitHub Action to build and deploy speed-docs to GitHub Pages",
   "main": "dist/index.js",
   "type": "module",
@@ -19,7 +19,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run bundle",
+    "bundle": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build"
   },
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.3",
+    "@vercel/ncc": "^0.38.1",
     "typescript": "^5.0.0"
   },
   "engines": {
