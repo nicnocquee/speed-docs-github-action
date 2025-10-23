@@ -31830,15 +31830,20 @@ async function deployToGitHubPages(outputPath, githubToken) {
         ]);
         // Get repository information
         const { owner, repo } = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo;
-        const repositoryUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
+        const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
+        const authenticatedUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📦 Repository: ${owner}/${repo}`);
         // Create a temporary directory for the deployment
         const tempDir = fs__WEBPACK_IMPORTED_MODULE_4___default().mkdtempSync(path__WEBPACK_IMPORTED_MODULE_3___default().join(process.cwd(), "deploy-"));
         try {
-            // Clone the repository into a subdirectory using token authentication
+            // Clone the repository into a subdirectory
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Cloning repository...");
             const repoDir = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, "repo");
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
+            // Set up authentication for the cloned repository
+            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["remote", "set-url", "origin", authenticatedUrl], {
+                cwd: repoDir,
+            });
             // Switch to gh-pages branch or create it
             try {
                 // Try to checkout existing gh-pages branch
@@ -31882,7 +31887,7 @@ async function deployToGitHubPages(outputPath, githubToken) {
                 });
                 // Push to gh-pages branch
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📤 Pushing to gh-pages branch...");
-                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["push", repositoryUrl, "gh-pages"], {
+                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["push", "origin", "gh-pages"], {
                     cwd: repoDir,
                 });
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("✅ Successfully deployed to GitHub Pages!");

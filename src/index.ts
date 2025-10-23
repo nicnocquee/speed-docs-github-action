@@ -147,7 +147,8 @@ async function deployToGitHubPages(
 
     // Get repository information
     const { owner, repo } = github.context.repo;
-    const repositoryUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
+    const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
+    const authenticatedUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
 
     core.info(`📦 Repository: ${owner}/${repo}`);
 
@@ -155,10 +156,19 @@ async function deployToGitHubPages(
     const tempDir = fs.mkdtempSync(path.join(process.cwd(), "deploy-"));
 
     try {
-      // Clone the repository into a subdirectory using token authentication
+      // Clone the repository into a subdirectory
       core.info("📥 Cloning repository...");
       const repoDir = path.join(tempDir, "repo");
       await exec.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
+
+      // Set up authentication for the cloned repository
+      await exec.exec(
+        "git",
+        ["remote", "set-url", "origin", authenticatedUrl],
+        {
+          cwd: repoDir,
+        }
+      );
 
       // Switch to gh-pages branch or create it
       try {
@@ -211,7 +221,7 @@ async function deployToGitHubPages(
 
         // Push to gh-pages branch
         core.info("📤 Pushing to gh-pages branch...");
-        await exec.exec("git", ["push", repositoryUrl, "gh-pages"], {
+        await exec.exec("git", ["push", "origin", "gh-pages"], {
           cwd: repoDir,
         });
 
