@@ -183,12 +183,39 @@ async function deployToGitHubPages(
           cwd: repoDir,
         });
         core.info("📋 Switched to existing gh-pages branch");
+
+        // Pull latest changes from remote gh-pages branch
+        try {
+          await exec.exec("git", ["pull", "origin", "gh-pages"], {
+            cwd: repoDir,
+          });
+          core.info("📥 Pulled latest changes from remote gh-pages branch");
+        } catch (pullError) {
+          core.warning(
+            "⚠️ Could not pull from remote gh-pages branch, continuing with local branch"
+          );
+        }
       } catch {
-        // Create new orphan branch if it doesn't exist
-        await exec.exec("git", ["checkout", "--orphan", "gh-pages"], {
-          cwd: repoDir,
-        });
-        core.info("📋 Created new gh-pages branch");
+        // Check if gh-pages branch exists remotely
+        try {
+          await exec.exec("git", ["fetch", "origin", "gh-pages"], {
+            cwd: repoDir,
+          });
+          await exec.exec(
+            "git",
+            ["checkout", "-b", "gh-pages", "origin/gh-pages"],
+            {
+              cwd: repoDir,
+            }
+          );
+          core.info("📋 Created local gh-pages branch from remote");
+        } catch {
+          // Create new orphan branch if it doesn't exist remotely either
+          await exec.exec("git", ["checkout", "--orphan", "gh-pages"], {
+            cwd: repoDir,
+          });
+          core.info("📋 Created new orphan gh-pages branch");
+        }
       }
 
       // Remove all existing files except .git
@@ -227,9 +254,18 @@ async function deployToGitHubPages(
 
         // Push to gh-pages branch
         core.info("📤 Pushing to gh-pages branch...");
-        await exec.exec("git", ["push", "origin", "gh-pages"], {
-          cwd: repoDir,
-        });
+        try {
+          await exec.exec("git", ["push", "origin", "gh-pages"], {
+            cwd: repoDir,
+          });
+        } catch (pushError) {
+          // If push fails due to conflicts, try force push
+          core.warning("⚠️ Regular push failed, attempting force push...");
+          await exec.exec("git", ["push", "--force", "origin", "gh-pages"], {
+            cwd: repoDir,
+          });
+          core.info("✅ Force push successful");
+        }
 
         core.info("✅ Successfully deployed to GitHub Pages!");
       } else {
