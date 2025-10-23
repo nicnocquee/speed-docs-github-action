@@ -54,6 +54,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for pushing to gh-pages branch
     steps:
       - uses: actions/checkout@v4
 
@@ -76,6 +78,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for pushing to gh-pages branch
     steps:
       - uses: actions/checkout@v4
 
@@ -95,7 +99,7 @@ jobs:
 | Input          | Description                                                           | Required | Default       |
 | -------------- | --------------------------------------------------------------------- | -------- | ------------- |
 | `content-path` | Path to the directory containing your content (config.json and docs/) | ✅       | -             |
-| `github-token` | GitHub token for authentication                                       | ✅       | -             |
+| `github-token` | GitHub token for authentication (use `${{ secrets.GITHUB_TOKEN }}`)   | ✅       | -             |
 | `output-dir`   | Output directory name                                                 | ❌       | `docs-output` |
 | `template-url` | Override the default template repository URL                          | ❌       | -             |
 | `force`        | Force redownload and reinstall template (ignores cache)               | ❌       | `false`       |
@@ -209,6 +213,34 @@ node dist/index.js
 
 - **Build Workflow**: Automatically builds the action on every push/PR
 - **Release Workflow**: Automatically publishes the action when a release is created
+
+## Troubleshooting
+
+### Permission Denied Error
+
+If you encounter a "Permission denied to github-actions[bot]" error, this means the `GITHUB_TOKEN` doesn't have write permissions. Add the following to your workflow:
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for pushing to gh-pages branch
+    steps:
+      # ... your steps
+```
+
+### Alternative: Repository-Level Permissions
+
+You can also set permissions globally for all workflows in your repository:
+
+1. Go to your repository **Settings** → **Actions** → **General**
+2. Under **Workflow permissions**, select **"Read and write permissions"**
+3. Click **Save**
+
+### Authentication Issues
+
+If you see authentication errors like "could not read Password", ensure you're using the correct token format. The action automatically handles authentication using the `x-access-token` format.
 
 ## License
 
