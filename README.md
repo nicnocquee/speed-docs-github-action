@@ -162,6 +162,20 @@ The `config.json` file should contain your documentation configuration:
 
 The action will automatically create and push to the `gh-pages` branch.
 
+## Troubleshooting
+
+### Missing `_next` Directory
+
+If your deployed site is missing the `_next` directory and showing broken pages, this is because GitHub Pages uses Jekyll by default, which ignores files and directories starting with an underscore (`_`).
+
+**Solution:** This action automatically creates a `.nojekyll` file to disable Jekyll processing, ensuring that the `_next` directory and other underscore-prefixed files are properly deployed.
+
+If you're still experiencing issues:
+
+1. Verify that the `.nojekyll` file is present in your `gh-pages` branch
+2. Check that your GitHub Pages settings are configured to deploy from the `gh-pages` branch
+3. Ensure your Next.js application is properly configured for static export
+
 ## Requirements
 
 - Node.js 18 or higher

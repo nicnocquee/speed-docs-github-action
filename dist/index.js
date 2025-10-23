@@ -31907,6 +31907,10 @@ async function deployToGitHubPages(outputPath, githubToken) {
             // Copy the built documentation to the repository
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📋 Copying documentation files...");
             await copyDirectory(outputPath, repoDir);
+            // Create .nojekyll file to prevent GitHub Pages from ignoring _next directory
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📄 Creating .nojekyll file to disable Jekyll processing...");
+            const nojekyllPath = path__WEBPACK_IMPORTED_MODULE_3___default().join(repoDir, ".nojekyll");
+            fs__WEBPACK_IMPORTED_MODULE_4___default().writeFileSync(nojekyllPath, "");
             // Add all files to git
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["add", "."], { cwd: repoDir });
             // Check if there are changes to commit

@@ -242,6 +242,11 @@ async function deployToGitHubPages(
       core.info("📋 Copying documentation files...");
       await copyDirectory(outputPath, repoDir);
 
+      // Create .nojekyll file to prevent GitHub Pages from ignoring _next directory
+      core.info("📄 Creating .nojekyll file to disable Jekyll processing...");
+      const nojekyllPath = path.join(repoDir, ".nojekyll");
+      fs.writeFileSync(nojekyllPath, "");
+
       // Add all files to git
       await exec.exec("git", ["add", "."], { cwd: repoDir });
 
