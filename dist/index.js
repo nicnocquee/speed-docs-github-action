@@ -31807,13 +31807,31 @@ async function deployToGitHubPages(outputPath, githubToken) {
             "user.email",
             "github-actions[bot]@users.noreply.github.com",
         ]);
+        // Configure git to use the token for authentication
+        await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", [
+            "config",
+            "--global",
+            "credential.helper",
+            "store",
+        ]);
         // Get repository information
         const { owner, repo } = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo;
-        const repositoryUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
+        const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📦 Repository: ${owner}/${repo}`);
         // Create a temporary directory for the deployment
         const tempDir = fs__WEBPACK_IMPORTED_MODULE_4___default().mkdtempSync(path__WEBPACK_IMPORTED_MODULE_3___default().join(process.cwd(), "deploy-"));
         try {
+            // Set up credentials for git operations
+            const credentials = `https://${githubToken}:@github.com\n`;
+            const credentialsPath = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, ".git-credentials");
+            fs__WEBPACK_IMPORTED_MODULE_4___default().writeFileSync(credentialsPath, credentials);
+            // Configure git to use the credentials file
+            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", [
+                "config",
+                "--global",
+                "credential.helper",
+                `store --file=${credentialsPath}`,
+            ]);
             // Clone the repository
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Cloning repository...");
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, tempDir]);

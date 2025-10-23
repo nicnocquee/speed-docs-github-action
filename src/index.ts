@@ -2,9 +2,7 @@
 
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
-import * as io from "@actions/io";
 import * as github from "@actions/github";
-import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
 
@@ -111,9 +109,17 @@ async function deployToGitHubPages(
       "github-actions[bot]@users.noreply.github.com",
     ]);
 
+    // Configure git to use the token for authentication
+    await exec.exec("git", [
+      "config",
+      "--global",
+      "credential.helper",
+      "store",
+    ]);
+
     // Get repository information
     const { owner, repo } = github.context.repo;
-    const repositoryUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
+    const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
 
     core.info(`📦 Repository: ${owner}/${repo}`);
 
@@ -121,6 +127,19 @@ async function deployToGitHubPages(
     const tempDir = fs.mkdtempSync(path.join(process.cwd(), "deploy-"));
 
     try {
+      // Set up credentials for git operations
+      const credentials = `https://${githubToken}:@github.com\n`;
+      const credentialsPath = path.join(tempDir, ".git-credentials");
+      fs.writeFileSync(credentialsPath, credentials);
+
+      // Configure git to use the credentials file
+      await exec.exec("git", [
+        "config",
+        "--global",
+        "credential.helper",
+        `store --file=${credentialsPath}`,
+      ]);
+
       // Clone the repository
       core.info("📥 Cloning repository...");
       await exec.exec("git", ["clone", "--depth=1", repositoryUrl, tempDir]);
