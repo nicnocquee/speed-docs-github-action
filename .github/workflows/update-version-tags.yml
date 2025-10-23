@@ -1,0 +1,61 @@
+name: Update Major and Minor Version Tags
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Version from Tag
+        id: extract_version
+        run: |
+          VERSION=${{ github.event.release.tag_name }}
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
+
+          # Extract major, minor, and patch versions
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "MAJOR_VERSION=v$MAJOR" >> $GITHUB_ENV
+          echo "MINOR_VERSION=v$MAJOR.$MINOR" >> $GITHUB_ENV
+          echo "FULL_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+
+          echo "Extracted versions:"
+          echo "  Full: ${{ github.event.release.tag_name }}"
+          echo "  Major: v$MAJOR"
+          echo "  Minor: v$MAJOR.$MINOR"
+
+      - name: Update Major Version Tag
+        run: |
+          echo "Updating major version tag: $MAJOR_VERSION"
+          git tag -fa $MAJOR_VERSION -m "Update major version tag to $FULL_VERSION"
+          git push origin $MAJOR_VERSION --force
+
+      - name: Update Minor Version Tag
+        run: |
+          echo "Updating minor version tag: $MINOR_VERSION"
+          git tag -fa $MINOR_VERSION -m "Update minor version tag to $FULL_VERSION"
+          git push origin $MINOR_VERSION --force
+
+      - name: Summary
+        run: |
+          echo "✅ Successfully updated version tags:"
+          echo "  - $MAJOR_VERSION now points to $FULL_VERSION"
+          echo "  - $MINOR_VERSION now points to $FULL_VERSION"
+          echo ""
+          echo "Users can now reference your action using:"
+          echo "  - $MAJOR_VERSION (always latest in major version)"
+          echo "  - $MINOR_VERSION (always latest in minor version)"
+          echo "  - $FULL_VERSION (specific version)"
