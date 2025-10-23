@@ -31831,7 +31831,7 @@ async function deployToGitHubPages(outputPath, githubToken) {
         // Get repository information
         const { owner, repo } = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo;
         const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
-        const authenticatedUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
+        const authenticatedUrl = `https://x-access-token:${githubToken}@github.com/${owner}/${repo}.git`;
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📦 Repository: ${owner}/${repo}`);
         // Create a temporary directory for the deployment
         const tempDir = fs__WEBPACK_IMPORTED_MODULE_4___default().mkdtempSync(path__WEBPACK_IMPORTED_MODULE_3___default().join(process.cwd(), "deploy-"));

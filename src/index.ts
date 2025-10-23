@@ -148,7 +148,7 @@ async function deployToGitHubPages(
     // Get repository information
     const { owner, repo } = github.context.repo;
     const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
-    const authenticatedUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
+    const authenticatedUrl = `https://x-access-token:${githubToken}@github.com/${owner}/${repo}.git`;
 
     core.info(`📦 Repository: ${owner}/${repo}`);
 
