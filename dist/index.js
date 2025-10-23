@@ -31843,11 +31843,20 @@ async function deployToGitHubPages(outputPath, githubToken) {
             // Clone the repository into a subdirectory
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Cloning repository...");
             const repoDir = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, "repo");
-            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
+            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", [
+                "clone",
+                "--depth=1",
+                "--no-single-branch",
+                repositoryUrl,
+                repoDir,
+            ]);
             // Set up authentication for the cloned repository
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["remote", "set-url", "origin", authenticatedUrl], {
                 cwd: repoDir,
             });
+            // Fetch all branches to ensure we have the latest refs
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Fetching all branches...");
+            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["fetch", "origin"], { cwd: repoDir });
             // Switch to gh-pages branch or create it
             try {
                 // Try to checkout existing gh-pages branch
@@ -31855,13 +31864,32 @@ async function deployToGitHubPages(outputPath, githubToken) {
                     cwd: repoDir,
                 });
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📋 Switched to existing gh-pages branch");
+                // Pull latest changes from remote gh-pages branch
+                try {
+                    await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["pull", "origin", "gh-pages"], {
+                        cwd: repoDir,
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Pulled latest changes from remote gh-pages branch");
+                }
+                catch (pullError) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning("⚠️ Could not pull from remote gh-pages branch, continuing with local branch");
+                }
             }
             catch {
-                // Create new orphan branch if it doesn't exist
-                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "--orphan", "gh-pages"], {
-                    cwd: repoDir,
-                });
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📋 Created new gh-pages branch");
+                // Check if gh-pages branch exists remotely
+                try {
+                    await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "-b", "gh-pages", "origin/gh-pages"], {
+                        cwd: repoDir,
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📋 Created local gh-pages branch from remote");
+                }
+                catch {
+                    // Create new orphan branch if it doesn't exist remotely either
+                    await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "--orphan", "gh-pages"], {
+                        cwd: repoDir,
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📋 Created new orphan gh-pages branch");
+                }
             }
             // Remove all existing files except .git
             const files = fs__WEBPACK_IMPORTED_MODULE_4___default().readdirSync(repoDir);
@@ -31891,9 +31919,19 @@ async function deployToGitHubPages(outputPath, githubToken) {
                 });
                 // Push to gh-pages branch
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📤 Pushing to gh-pages branch...");
-                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["push", "origin", "gh-pages"], {
-                    cwd: repoDir,
-                });
+                try {
+                    await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["push", "origin", "gh-pages"], {
+                        cwd: repoDir,
+                    });
+                }
+                catch (pushError) {
+                    // If push fails due to conflicts, try force push
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning("⚠️ Regular push failed, attempting force push...");
+                    await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["push", "--force", "origin", "gh-pages"], {
+                        cwd: repoDir,
+                    });
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("✅ Force push successful");
+                }
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("✅ Successfully deployed to GitHub Pages!");
             }
             else {

@@ -165,7 +165,13 @@ async function deployToGitHubPages(
       // Clone the repository into a subdirectory
       core.info("📥 Cloning repository...");
       const repoDir = path.join(tempDir, "repo");
-      await exec.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
+      await exec.exec("git", [
+        "clone",
+        "--depth=1",
+        "--no-single-branch",
+        repositoryUrl,
+        repoDir,
+      ]);
 
       // Set up authentication for the cloned repository
       await exec.exec(
@@ -175,6 +181,10 @@ async function deployToGitHubPages(
           cwd: repoDir,
         }
       );
+
+      // Fetch all branches to ensure we have the latest refs
+      core.info("📥 Fetching all branches...");
+      await exec.exec("git", ["fetch", "origin"], { cwd: repoDir });
 
       // Switch to gh-pages branch or create it
       try {
@@ -198,9 +208,6 @@ async function deployToGitHubPages(
       } catch {
         // Check if gh-pages branch exists remotely
         try {
-          await exec.exec("git", ["fetch", "origin", "gh-pages"], {
-            cwd: repoDir,
-          });
           await exec.exec(
             "git",
             ["checkout", "-b", "gh-pages", "origin/gh-pages"],
