@@ -31734,6 +31734,20 @@ var __webpack_exports__ = {};
 
 
 
+async function validateGitHubToken(githubToken) {
+    try {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("🔐 Validating GitHub token permissions...");
+        // Test token by making a simple API call
+        const octokit = _actions_github__WEBPACK_IMPORTED_MODULE_2__.getOctokit(githubToken);
+        const { owner, repo } = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo;
+        // Check if we can access the repository
+        await octokit.rest.repos.get({ owner, repo });
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("✅ GitHub token validation successful");
+    }
+    catch (error) {
+        throw new Error(`GitHub token validation failed. Please ensure the token has 'repo' permissions: ${error instanceof Error ? error.message : String(error)}`);
+    }
+}
 async function run() {
     try {
         // Get inputs
@@ -31748,6 +31762,8 @@ async function run() {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("🚀 Starting Speed Docs GitHub Action");
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📁 Content path: ${inputs.contentPath}`);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📁 Output directory: ${inputs.outputDir}`);
+        // Validate GitHub token permissions
+        await validateGitHubToken(inputs.githubToken);
         // Validate content path exists
         const resolvedContentPath = path__WEBPACK_IMPORTED_MODULE_3___default().resolve(inputs.contentPath);
         if (!fs__WEBPACK_IMPORTED_MODULE_4___default().existsSync(resolvedContentPath)) {
@@ -31771,18 +31787,23 @@ async function run() {
         }
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`🔨 Running speed-docs command: ${speedDocsCommand.join(" ")}`);
         // Run speed-docs CLI
-        const exitCode = await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("npx", speedDocsCommand, {
+        const { stdout, stderr, exitCode } = await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.getExecOutput("npx", speedDocsCommand, {
             cwd: process.cwd(),
         });
         if (exitCode !== 0) {
-            throw new Error(`speed-docs command failed with exit code ${exitCode}`);
+            const errorMessage = stderr.trim() || stdout.trim() || `Exit code ${exitCode}`;
+            throw new Error(`speed-docs command failed: ${errorMessage}`);
         }
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("✅ Speed docs build completed successfully");
+        if (stdout.trim()) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Speed-docs output: ${stdout.trim()}`);
+        }
         // Verify output directory exists
         const outputPath = path__WEBPACK_IMPORTED_MODULE_3___default().resolve(inputs.outputDir);
         if (!fs__WEBPACK_IMPORTED_MODULE_4___default().existsSync(outputPath)) {
-            throw new Error(`Output directory not found: ${outputPath}`);
+            throw new Error(`Speed-docs failed to create output directory: ${outputPath}`);
         }
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📁 Output directory verified: ${outputPath}`);
         // Deploy to GitHub Pages
         await deployToGitHubPages(outputPath, inputs.githubToken);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("🎉 GitHub Action completed successfully!");
@@ -31807,13 +31828,7 @@ async function deployToGitHubPages(outputPath, githubToken) {
             "user.email",
             "github-actions[bot]@users.noreply.github.com",
         ]);
-        // Configure git to use the token for authentication
-        await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", [
-            "config",
-            "--global",
-            "credential.helper",
-            "store",
-        ]);
+        // Note: We'll configure git credentials later with file-based approach
         // Get repository information
         const { owner, repo } = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo;
         const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
@@ -31825,7 +31840,7 @@ async function deployToGitHubPages(outputPath, githubToken) {
             const credentials = `https://${githubToken}:@github.com\n`;
             const credentialsPath = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, ".git-credentials");
             fs__WEBPACK_IMPORTED_MODULE_4___default().writeFileSync(credentialsPath, credentials);
-            // Configure git to use the credentials file
+            // Configure git to use the credentials file (only set this once)
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", [
                 "config",
                 "--global",
@@ -31837,9 +31852,20 @@ async function deployToGitHubPages(outputPath, githubToken) {
             const repoDir = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, "repo");
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
             // Switch to gh-pages branch or create it
-            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "--orphan", "gh-pages"], {
-                cwd: repoDir,
-            });
+            try {
+                // Try to checkout existing gh-pages branch
+                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "gh-pages"], {
+                    cwd: repoDir,
+                });
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📋 Switched to existing gh-pages branch");
+            }
+            catch {
+                // Create new orphan branch if it doesn't exist
+                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "--orphan", "gh-pages"], {
+                    cwd: repoDir,
+                });
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📋 Created new gh-pages branch");
+            }
             // Remove all existing files except .git
             const files = fs__WEBPACK_IMPORTED_MODULE_4___default().readdirSync(repoDir);
             for (const file of files) {
@@ -31878,8 +31904,15 @@ async function deployToGitHubPages(outputPath, githubToken) {
             }
         }
         finally {
-            // Clean up temporary directory
-            fs__WEBPACK_IMPORTED_MODULE_4___default().rmSync(tempDir, { recursive: true, force: true });
+            // Clean up temporary directory and reset git config
+            try {
+                fs__WEBPACK_IMPORTED_MODULE_4___default().rmSync(tempDir, { recursive: true, force: true });
+                // Reset git credential helper to default
+                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["config", "--global", "--unset", "credential.helper"]);
+            }
+            catch (cleanupError) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`Cleanup warning: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+            }
         }
     }
     catch (error) {

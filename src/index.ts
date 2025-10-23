@@ -15,6 +15,26 @@ interface ActionInputs {
   downloadDir?: string;
 }
 
+async function validateGitHubToken(githubToken: string): Promise<void> {
+  try {
+    core.info("🔐 Validating GitHub token permissions...");
+
+    // Test token by making a simple API call
+    const octokit = github.getOctokit(githubToken);
+    const { owner, repo } = github.context.repo;
+
+    // Check if we can access the repository
+    await octokit.rest.repos.get({ owner, repo });
+    core.info("✅ GitHub token validation successful");
+  } catch (error) {
+    throw new Error(
+      `GitHub token validation failed. Please ensure the token has 'repo' permissions: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
 async function run(): Promise<void> {
   try {
     // Get inputs
@@ -30,6 +50,9 @@ async function run(): Promise<void> {
     core.info("🚀 Starting Speed Docs GitHub Action");
     core.info(`📁 Content path: ${inputs.contentPath}`);
     core.info(`📁 Output directory: ${inputs.outputDir}`);
+
+    // Validate GitHub token permissions
+    await validateGitHubToken(inputs.githubToken);
 
     // Validate content path exists
     const resolvedContentPath = path.resolve(inputs.contentPath);
@@ -63,21 +86,34 @@ async function run(): Promise<void> {
     core.info(`🔨 Running speed-docs command: ${speedDocsCommand.join(" ")}`);
 
     // Run speed-docs CLI
-    const exitCode = await exec.exec("npx", speedDocsCommand, {
-      cwd: process.cwd(),
-    });
+    const { stdout, stderr, exitCode } = await exec.getExecOutput(
+      "npx",
+      speedDocsCommand,
+      {
+        cwd: process.cwd(),
+      }
+    );
 
     if (exitCode !== 0) {
-      throw new Error(`speed-docs command failed with exit code ${exitCode}`);
+      const errorMessage =
+        stderr.trim() || stdout.trim() || `Exit code ${exitCode}`;
+      throw new Error(`speed-docs command failed: ${errorMessage}`);
     }
 
     core.info("✅ Speed docs build completed successfully");
+    if (stdout.trim()) {
+      core.info(`Speed-docs output: ${stdout.trim()}`);
+    }
 
     // Verify output directory exists
     const outputPath = path.resolve(inputs.outputDir!);
     if (!fs.existsSync(outputPath)) {
-      throw new Error(`Output directory not found: ${outputPath}`);
+      throw new Error(
+        `Speed-docs failed to create output directory: ${outputPath}`
+      );
     }
+
+    core.info(`📁 Output directory verified: ${outputPath}`);
 
     // Deploy to GitHub Pages
     await deployToGitHubPages(outputPath, inputs.githubToken);
@@ -109,13 +145,7 @@ async function deployToGitHubPages(
       "github-actions[bot]@users.noreply.github.com",
     ]);
 
-    // Configure git to use the token for authentication
-    await exec.exec("git", [
-      "config",
-      "--global",
-      "credential.helper",
-      "store",
-    ]);
+    // Note: We'll configure git credentials later with file-based approach
 
     // Get repository information
     const { owner, repo } = github.context.repo;
@@ -132,7 +162,7 @@ async function deployToGitHubPages(
       const credentialsPath = path.join(tempDir, ".git-credentials");
       fs.writeFileSync(credentialsPath, credentials);
 
-      // Configure git to use the credentials file
+      // Configure git to use the credentials file (only set this once)
       await exec.exec("git", [
         "config",
         "--global",
@@ -146,9 +176,19 @@ async function deployToGitHubPages(
       await exec.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
 
       // Switch to gh-pages branch or create it
-      await exec.exec("git", ["checkout", "--orphan", "gh-pages"], {
-        cwd: repoDir,
-      });
+      try {
+        // Try to checkout existing gh-pages branch
+        await exec.exec("git", ["checkout", "gh-pages"], {
+          cwd: repoDir,
+        });
+        core.info("📋 Switched to existing gh-pages branch");
+      } catch {
+        // Create new orphan branch if it doesn't exist
+        await exec.exec("git", ["checkout", "--orphan", "gh-pages"], {
+          cwd: repoDir,
+        });
+        core.info("📋 Created new gh-pages branch");
+      }
 
       // Remove all existing files except .git
       const files = fs.readdirSync(repoDir);
@@ -195,8 +235,25 @@ async function deployToGitHubPages(
         core.info("ℹ️ No changes to deploy");
       }
     } finally {
-      // Clean up temporary directory
-      fs.rmSync(tempDir, { recursive: true, force: true });
+      // Clean up temporary directory and reset git config
+      try {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+        // Reset git credential helper to default
+        await exec.exec("git", [
+          "config",
+          "--global",
+          "--unset",
+          "credential.helper",
+        ]);
+      } catch (cleanupError) {
+        core.warning(
+          `Cleanup warning: ${
+            cleanupError instanceof Error
+              ? cleanupError.message
+              : String(cleanupError)
+          }`
+        );
+      }
     }
   } catch (error) {
     core.error(
