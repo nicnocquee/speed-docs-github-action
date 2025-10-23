@@ -31818,7 +31818,7 @@ async function deployToGitHubPages(outputPath, githubToken) {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Cloning repository...");
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, tempDir]);
             // Switch to gh-pages branch or create it
-            const repoDir = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, repo);
+            const repoDir = tempDir;
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "--orphan", "gh-pages"], {
                 cwd: repoDir,
             });

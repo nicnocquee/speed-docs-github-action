@@ -126,7 +126,7 @@ async function deployToGitHubPages(
       await exec.exec("git", ["clone", "--depth=1", repositoryUrl, tempDir]);
 
       // Switch to gh-pages branch or create it
-      const repoDir = path.join(tempDir, repo);
+      const repoDir = tempDir;
       await exec.exec("git", ["checkout", "--orphan", "gh-pages"], {
         cwd: repoDir,
       });
