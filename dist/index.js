@@ -31832,11 +31832,11 @@ async function deployToGitHubPages(outputPath, githubToken) {
                 "credential.helper",
                 `store --file=${credentialsPath}`,
             ]);
-            // Clone the repository
+            // Clone the repository into a subdirectory
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Cloning repository...");
-            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, tempDir]);
+            const repoDir = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, "repo");
+            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
             // Switch to gh-pages branch or create it
-            const repoDir = tempDir;
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["checkout", "--orphan", "gh-pages"], {
                 cwd: repoDir,
             });

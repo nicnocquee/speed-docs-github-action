@@ -140,12 +140,12 @@ async function deployToGitHubPages(
         `store --file=${credentialsPath}`,
       ]);
 
-      // Clone the repository
+      // Clone the repository into a subdirectory
       core.info("📥 Cloning repository...");
-      await exec.exec("git", ["clone", "--depth=1", repositoryUrl, tempDir]);
+      const repoDir = path.join(tempDir, "repo");
+      await exec.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
 
       // Switch to gh-pages branch or create it
-      const repoDir = tempDir;
       await exec.exec("git", ["checkout", "--orphan", "gh-pages"], {
         cwd: repoDir,
       });
