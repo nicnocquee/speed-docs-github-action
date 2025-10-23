@@ -145,11 +145,9 @@ async function deployToGitHubPages(
       "github-actions[bot]@users.noreply.github.com",
     ]);
 
-    // Note: We'll configure git credentials later with file-based approach
-
     // Get repository information
     const { owner, repo } = github.context.repo;
-    const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
+    const repositoryUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
 
     core.info(`📦 Repository: ${owner}/${repo}`);
 
@@ -157,20 +155,7 @@ async function deployToGitHubPages(
     const tempDir = fs.mkdtempSync(path.join(process.cwd(), "deploy-"));
 
     try {
-      // Set up credentials for git operations
-      const credentials = `https://${githubToken}:@github.com\n`;
-      const credentialsPath = path.join(tempDir, ".git-credentials");
-      fs.writeFileSync(credentialsPath, credentials);
-
-      // Configure git to use the credentials file (only set this once)
-      await exec.exec("git", [
-        "config",
-        "--global",
-        "credential.helper",
-        `store --file=${credentialsPath}`,
-      ]);
-
-      // Clone the repository into a subdirectory
+      // Clone the repository into a subdirectory using token authentication
       core.info("📥 Cloning repository...");
       const repoDir = path.join(tempDir, "repo");
       await exec.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
@@ -226,7 +211,7 @@ async function deployToGitHubPages(
 
         // Push to gh-pages branch
         core.info("📤 Pushing to gh-pages branch...");
-        await exec.exec("git", ["push", "origin", "gh-pages"], {
+        await exec.exec("git", ["push", repositoryUrl, "gh-pages"], {
           cwd: repoDir,
         });
 
@@ -235,16 +220,9 @@ async function deployToGitHubPages(
         core.info("ℹ️ No changes to deploy");
       }
     } finally {
-      // Clean up temporary directory and reset git config
+      // Clean up temporary directory
       try {
         fs.rmSync(tempDir, { recursive: true, force: true });
-        // Reset git credential helper to default
-        await exec.exec("git", [
-          "config",
-          "--global",
-          "--unset",
-          "credential.helper",
-        ]);
       } catch (cleanupError) {
         core.warning(
           `Cleanup warning: ${

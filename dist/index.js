@@ -31828,26 +31828,14 @@ async function deployToGitHubPages(outputPath, githubToken) {
             "user.email",
             "github-actions[bot]@users.noreply.github.com",
         ]);
-        // Note: We'll configure git credentials later with file-based approach
         // Get repository information
         const { owner, repo } = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo;
-        const repositoryUrl = `https://github.com/${owner}/${repo}.git`;
+        const repositoryUrl = `https://${githubToken}@github.com/${owner}/${repo}.git`;
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📦 Repository: ${owner}/${repo}`);
         // Create a temporary directory for the deployment
         const tempDir = fs__WEBPACK_IMPORTED_MODULE_4___default().mkdtempSync(path__WEBPACK_IMPORTED_MODULE_3___default().join(process.cwd(), "deploy-"));
         try {
-            // Set up credentials for git operations
-            const credentials = `https://${githubToken}:@github.com\n`;
-            const credentialsPath = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, ".git-credentials");
-            fs__WEBPACK_IMPORTED_MODULE_4___default().writeFileSync(credentialsPath, credentials);
-            // Configure git to use the credentials file (only set this once)
-            await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", [
-                "config",
-                "--global",
-                "credential.helper",
-                `store --file=${credentialsPath}`,
-            ]);
-            // Clone the repository into a subdirectory
+            // Clone the repository into a subdirectory using token authentication
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📥 Cloning repository...");
             const repoDir = path__WEBPACK_IMPORTED_MODULE_3___default().join(tempDir, "repo");
             await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["clone", "--depth=1", repositoryUrl, repoDir]);
@@ -31894,7 +31882,7 @@ async function deployToGitHubPages(outputPath, githubToken) {
                 });
                 // Push to gh-pages branch
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("📤 Pushing to gh-pages branch...");
-                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["push", "origin", "gh-pages"], {
+                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["push", repositoryUrl, "gh-pages"], {
                     cwd: repoDir,
                 });
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("✅ Successfully deployed to GitHub Pages!");
@@ -31904,14 +31892,14 @@ async function deployToGitHubPages(outputPath, githubToken) {
             }
         }
         finally {
-            // Clean up temporary directory and reset git config
+            // Clean up temporary directory
             try {
                 fs__WEBPACK_IMPORTED_MODULE_4___default().rmSync(tempDir, { recursive: true, force: true });
-                // Reset git credential helper to default
-                await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec("git", ["config", "--global", "--unset", "credential.helper"]);
             }
             catch (cleanupError) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`Cleanup warning: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`Cleanup warning: ${cleanupError instanceof Error
+                    ? cleanupError.message
+                    : String(cleanupError)}`);
             }
         }
     }
