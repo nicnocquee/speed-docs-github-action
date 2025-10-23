@@ -1,17 +1,17 @@
 {
   "name": "speed-docs-github-action",
-  "version": "0.0.0",
+  "version": "1.0.1",
   "description": "GitHub Action to build and deploy speed-docs to GitHub Pages",
   "main": "dist/index.js",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nicnocquee/speed-docs.git",
+    "url": "https://github.com/nicnocquee/speed-docs-github-action.git",
     "directory": "apps/speed-docs-github-action"
   },
-  "homepage": "https://github.com/nicnocquee/speed-docs/tree/main/apps/speed-docs-github-action",
+  "homepage": "https://github.com/nicnocquee/speed-docs-github-action/tree/main/apps/speed-docs-github-action",
   "bugs": {
-    "url": "https://github.com/nicnocquee/speed-docs/issues"
+    "url": "https://github.com/nicnocquee/speed-docs-github-action/issues"
   },
   "files": [
     "dist",
