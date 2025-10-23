@@ -31758,6 +31758,7 @@ async function run() {
             templateUrl: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("template-url"),
             force: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput("force"),
             downloadDir: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("download-dir"),
+            basePath: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("base-path"),
         };
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("🚀 Starting Speed Docs GitHub Action");
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`📁 Content path: ${inputs.contentPath}`);
@@ -31784,6 +31785,9 @@ async function run() {
         }
         if (inputs.downloadDir) {
             speedDocsCommand.push("--download-dir", inputs.downloadDir);
+        }
+        if (inputs.basePath) {
+            speedDocsCommand.push("--base-path", inputs.basePath);
         }
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`🔨 Running speed-docs command: ${speedDocsCommand.join(" ")}`);
         // Run speed-docs CLI

@@ -23,6 +23,9 @@ inputs:
   download-dir:
     description: "Override the default download/cache directory"
     required: false
+  base-path:
+    description: "Base path for the documentation site"
+    required: false
 
 outputs:
   output-path:

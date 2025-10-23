@@ -13,6 +13,7 @@ interface ActionInputs {
   templateUrl?: string;
   force?: boolean;
   downloadDir?: string;
+  basePath?: string;
 }
 
 async function validateGitHubToken(githubToken: string): Promise<void> {
@@ -45,6 +46,7 @@ async function run(): Promise<void> {
       templateUrl: core.getInput("template-url"),
       force: core.getBooleanInput("force"),
       downloadDir: core.getInput("download-dir"),
+      basePath: core.getInput("base-path"),
     };
 
     core.info("🚀 Starting Speed Docs GitHub Action");
@@ -81,6 +83,10 @@ async function run(): Promise<void> {
 
     if (inputs.downloadDir) {
       speedDocsCommand.push("--download-dir", inputs.downloadDir);
+    }
+
+    if (inputs.basePath) {
+      speedDocsCommand.push("--base-path", inputs.basePath);
     }
 
     core.info(`🔨 Running speed-docs command: ${speedDocsCommand.join(" ")}`);

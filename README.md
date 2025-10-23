@@ -31,11 +31,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Pages
+        id: setup_pages
+        uses: actions/configure-pages@v5
+
       - name: Deploy docs to GitHub Pages
         uses: nicnocquee/speed-docs-github-action@v1
         with:
           content-path: "./docs"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-path: ${{ steps.setup_pages.outputs.base_path }}
 ```
 
 > **Note**: The action is automatically published to a separate repository when releases are created in this monorepo.
@@ -59,11 +64,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Pages
+        id: setup_pages
+        uses: actions/configure-pages@v5
+
       - name: Deploy docs to GitHub Pages
         uses: ./apps/speed-docs-github-action
         with:
           content-path: "./docs"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-path: ${{ steps.setup_pages.outputs.base_path }}
 ```
 
 ### Advanced Usage
@@ -83,11 +93,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Pages
+        id: setup_pages
+        uses: actions/configure-pages@v5
+
       - name: Deploy docs to GitHub Pages
         uses: nicnocquee/speed-docs-github-action@v1
         with:
           content-path: "./docs"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-path: ${{ steps.setup_pages.outputs.base_path }}
           output-dir: "build-output"
           template-url: "https://github.com/custom/template.git"
           force: true
@@ -104,6 +119,7 @@ jobs:
 | `template-url` | Override the default template repository URL                          | ❌       | -             |
 | `force`        | Force redownload and reinstall template (ignores cache)               | ❌       | `false`       |
 | `download-dir` | Override the default download/cache directory                         | ❌       | -             |
+| `base-path`    | Base path for the documentation site                                  | ❌       | -             |
 
 ## Outputs
 
