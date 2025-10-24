@@ -176,76 +176,17 @@ The `config.json` file should contain your documentation configuration:
 }
 ```
 
+Read more in the [speed-docs documentation](https://speed-docs.dev/quick-start/preparing-your-content).
+
 ## GitHub Pages Setup
 
 1. Go to your repository settings
 2. Navigate to "Pages" section
 3. Set source to "Deploy from a branch"
-4. Select "gh-pages" branch
+4. Select "gh-pages" branch. Create it if it doesn't exist.
 5. Set folder to "/ (root)"
 
 The action will automatically create and push to the `gh-pages` branch.
-
-## Troubleshooting
-
-### Missing `_next` Directory
-
-If your deployed site is missing the `_next` directory and showing broken pages, this is because GitHub Pages uses Jekyll by default, which ignores files and directories starting with an underscore (`_`).
-
-**Solution:** This action automatically creates a `.nojekyll` file to disable Jekyll processing, ensuring that the `_next` directory and other underscore-prefixed files are properly deployed.
-
-If you're still experiencing issues:
-
-1. Verify that the `.nojekyll` file is present in your `gh-pages` branch
-2. Check that your GitHub Pages settings are configured to deploy from the `gh-pages` branch
-3. Ensure your Next.js application is properly configured for static export
-
-## Requirements
-
-- Node.js 18 or higher
-- Valid content structure with `config.json` and `docs/` directory
-- GitHub token with appropriate permissions
-
-## Publishing
-
-This GitHub Action is automatically built and published when releases are created. **Version management is fully automated** - you only need to create a GitHub release, and the version will be automatically synchronized.
-
-### How to Publish a New Version (Automated)
-
-1. **Create a release** on GitHub:
-
-   - Go to the [Releases page](https://github.com/nicnocquee/speed-docs/releases)
-   - Click "Create a new release"
-   - Create a new tag (e.g., `v1.1.0`)
-   - Add release notes
-   - Publish the release
-
-2. **Everything else is automatic**:
-   - ✅ Version is automatically updated in `package.json`
-   - ✅ Action is built and published
-   - ✅ Available as `nicnocquee/speed-docs-github-action@v1.1.0`
-
-### Automated Workflows
-
-The publishing process uses two automated workflows:
-
-1. **Pre-Release Validation**: Validates the release tag and checks readiness
-2. **Release Action**: Updates version, builds and publishes the action
-
-### Manual Version Management (Optional)
-
-If you prefer to manage versions manually:
-
-```bash
-# Update package.json version
-cd apps/speed-docs-github-action
-npm version patch  # or minor, major
-
-# Commit and push
-git add package.json
-git commit -m "chore: bump version to X.X.X"
-git push
-```
 
 ### Development
 
@@ -253,7 +194,6 @@ To work on this action locally:
 
 ```bash
 # Install dependencies
-cd apps/speed-docs-github-action
 npm install
 
 # Build the action
@@ -263,10 +203,9 @@ npm run build
 node dist/index.js
 ```
 
-### Workflows
+## Example
 
-- **Build Workflow**: Automatically builds the action on every push/PR
-- **Release Workflow**: Automatically publishes the action when a release is created
+The documentation website for speed-docs is built with this action and deployed to GitHub Pages. You can see the workflow [here](https://github.com/nicnocquee/speed-docs/blob/main/.github/workflows/pages.yml) and the content [here](https://github.com/nicnocquee/speed-docs/tree/main/docs).
 
 ## Troubleshooting
 
@@ -284,18 +223,6 @@ jobs:
       # ... your steps
 ```
 
-### Alternative: Repository-Level Permissions
-
-You can also set permissions globally for all workflows in your repository:
-
-1. Go to your repository **Settings** → **Actions** → **General**
-2. Under **Workflow permissions**, select **"Read and write permissions"**
-3. Click **Save**
-
-### Authentication Issues
-
-If you see authentication errors like "could not read Password", ensure you're using the correct token format. The action automatically handles authentication using the `x-access-token` format.
-
 ### Pages not found
 
 If you got the following error in GitHub actions logs:
@@ -309,3 +236,7 @@ Make sure you have configured the Pages settings in your repository. If you don'
 ## License
 
 MIT
+
+## Author
+
+[Nico Prananta](https://nico.fyi)
