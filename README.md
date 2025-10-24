@@ -26,6 +26,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -59,6 +61,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Deploy docs to GitHub Pages
@@ -207,6 +211,8 @@ node dist/index.js
 
 The documentation website for speed-docs is built with this action and deployed to GitHub Pages. You can see the workflow [here](https://github.com/nicnocquee/speed-docs/blob/main/.github/workflows/pages.yml) and the content [here](https://github.com/nicnocquee/speed-docs/tree/main/docs).
 
+Another example is the documentation website for [simple-i18n-next](https://nicnocquee.github.io/simple-i18n-next/). The content is [here](https://github.com/nicnocquee/simple-i18n-next/tree/main/docs) and the workflow is [here](https://github.com/nicnocquee/simple-i18n-next/blob/main/.github/workflows/publish-page.yml).
+
 ## Troubleshooting
 
 ### Permission Denied Error
@@ -231,7 +237,7 @@ If you got the following error in GitHub actions logs:
 Get Pages site failed. Please verify that the repository has Pages enabled and configured to build using GitHub Actions, or consider exploring the `enablement` parameter for this action. Error: Not Found
 ```
 
-Make sure you have configured the Pages settings in your repository. If you don't have `gh-pages` branch yet, you can create it first or in some cases toggling the "Source" in "Pages" section of your repository settings from "GitHub Actions" to "Deploy from a branch" fixes the issue.
+Make sure you have configured the Pages settings in your repository. If you don't have `gh-pages` branch yet, you can create it first or in some cases toggling the "Source" in "Pages" section of your repository settings from "GitHub Actions" to "Deploy from a branch" fixes the issue. It's ok to have the `main` branch as the source at the beginning. You just need to switch it to `gh-pages` branch after the first deployment.
 
 ## License
 
