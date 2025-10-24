@@ -2,7 +2,6 @@
 
 A GitHub Action that builds documentation using the [speed-docs](https://github.com/nicnocquee/speed-docs) CLI and deploys it to GitHub Pages.
 
-[![Build Status](https://github.com/nicnocquee/speed-docs/workflows/Build%20and%20Publish%20Action/badge.svg)](https://github.com/nicnocquee/speed-docs/actions)
 [![Release](https://img.shields.io/github/v/release/nicnocquee/speed-docs)](https://github.com/nicnocquee/speed-docs/releases)
 
 ## Features
@@ -182,13 +181,20 @@ The `config.json` file should contain your documentation configuration:
 
 Read more in the [speed-docs documentation](https://speed-docs.dev/quick-start/preparing-your-content).
 
+## Example
+
+The documentation website for speed-docs is built with this action and deployed to GitHub Pages. You can see the workflow [here](https://github.com/nicnocquee/speed-docs/blob/main/.github/workflows/pages.yml) and the content [here](https://github.com/nicnocquee/speed-docs/tree/main/docs).
+
+Another example is the documentation website for [simple-i18n-next](https://nicnocquee.github.io/simple-i18n-next/). The content is [here](https://github.com/nicnocquee/simple-i18n-next/tree/main/docs) and the workflow is [here](https://github.com/nicnocquee/simple-i18n-next/blob/main/.github/workflows/publish-page.yml).
+
 ## GitHub Pages Setup
 
 1. Go to your repository settings
 2. Navigate to "Pages" section
 3. Set source to "Deploy from a branch"
-4. Select "gh-pages" branch. Create it if it doesn't exist.
-5. Set folder to "/ (root)"
+4. Select "gh-pages" branch. If none, use the "main" branch first.
+5. Set folder to "/ (root)".
+6. After the first deployment, switch the source to "Deploy from a branch" and select "gh-pages" branch. Then redeploy.
 
 The action will automatically create and push to the `gh-pages` branch.
 
@@ -206,12 +212,6 @@ npm run build
 # Test locally
 node dist/index.js
 ```
-
-## Example
-
-The documentation website for speed-docs is built with this action and deployed to GitHub Pages. You can see the workflow [here](https://github.com/nicnocquee/speed-docs/blob/main/.github/workflows/pages.yml) and the content [here](https://github.com/nicnocquee/speed-docs/tree/main/docs).
-
-Another example is the documentation website for [simple-i18n-next](https://nicnocquee.github.io/simple-i18n-next/). The content is [here](https://github.com/nicnocquee/simple-i18n-next/tree/main/docs) and the workflow is [here](https://github.com/nicnocquee/simple-i18n-next/blob/main/.github/workflows/publish-page.yml).
 
 ## Troubleshooting
 
