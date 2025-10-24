@@ -9,8 +9,6 @@ A GitHub Action that builds documentation using the [speed-docs](https://github.
 
 - 🚀 Builds documentation using speed-docs CLI
 - 📦 Deploys to GitHub Pages automatically
-- 🔧 Configurable template and build options
-- ✅ Validates content structure before building
 
 ## Usage
 
@@ -33,17 +31,42 @@ jobs:
 
       - name: Setup Pages
         id: setup_pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v5 # You need to add this step if you are NOT using custom domain
 
       - name: Deploy docs to GitHub Pages
         uses: nicnocquee/speed-docs-github-action@v1
         with:
           content-path: "./docs"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-path: ${{ steps.setup_pages.outputs.base_path }}
+          base-path: ${{ steps.setup_pages.outputs.base_path }} # You need to add this step if you are NOT using custom domain
 ```
 
-> **Note**: The action is automatically published to a separate repository when releases are created in this monorepo.
+If you use a custom domain, you need to create a CNAME file in the root of the content directory with your custom domain name. For example:
+
+```
+speed-docs.dev
+```
+
+Then use the following workflow:
+
+```yaml
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy docs to GitHub Pages
+        uses: nicnocquee/speed-docs-github-action@v1
+        with:
+          content-path: "./docs"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
 
 ### Local Development
 
@@ -111,15 +134,16 @@ jobs:
 
 ## Inputs
 
-| Input          | Description                                                           | Required | Default       |
-| -------------- | --------------------------------------------------------------------- | -------- | ------------- |
-| `content-path` | Path to the directory containing your content (config.json and docs/) | ✅       | -             |
-| `github-token` | GitHub token for authentication (use `${{ secrets.GITHUB_TOKEN }}`)   | ✅       | -             |
-| `output-dir`   | Output directory name                                                 | ❌       | `docs-output` |
-| `template-url` | Override the default template repository URL                          | ❌       | -             |
-| `force`        | Force redownload and reinstall template (ignores cache)               | ❌       | `false`       |
-| `download-dir` | Override the default download/cache directory                         | ❌       | -             |
-| `base-path`    | Base path for the documentation site                                  | ❌       | -             |
+| Input            | Description                                                           | Required | Default       |
+| ---------------- | --------------------------------------------------------------------- | -------- | ------------- |
+| `content-path`   | Path to the directory containing your content (config.json and docs/) | ✅       | -             |
+| `github-token`   | GitHub token for authentication (use `${{ secrets.GITHUB_TOKEN }}`)   | ✅       | -             |
+| `output-dir`     | Output directory name                                                 | ❌       | `docs-output` |
+| `template-url`   | Override the default template repository URL                          | ❌       | -             |
+| `force`          | Force redownload and reinstall template (ignores cache)               | ❌       | `false`       |
+| `download-dir`   | Override the default download/cache directory                         | ❌       | -             |
+| `base-path`      | Base path for the documentation site                                  | ❌       | -             |
+| `include-hidden` | Include hidden files and directories in the content directory         | ❌       | `false`       |
 
 ## Outputs
 
@@ -271,6 +295,16 @@ You can also set permissions globally for all workflows in your repository:
 ### Authentication Issues
 
 If you see authentication errors like "could not read Password", ensure you're using the correct token format. The action automatically handles authentication using the `x-access-token` format.
+
+### Pages not found
+
+If you got the following error in GitHub actions logs:
+
+```
+Get Pages site failed. Please verify that the repository has Pages enabled and configured to build using GitHub Actions, or consider exploring the `enablement` parameter for this action. Error: Not Found
+```
+
+Make sure you have configured the Pages settings in your repository. If you don't have `gh-pages` branch yet, you can create it first or in some cases toggling the "Source" in "Pages" section of your repository settings from "GitHub Actions" to "Deploy from a branch" fixes the issue.
 
 ## License
 

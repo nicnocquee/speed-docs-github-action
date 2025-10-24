@@ -14,6 +14,7 @@ interface ActionInputs {
   force?: boolean;
   downloadDir?: string;
   basePath?: string;
+  includeHidden?: boolean;
 }
 
 async function validateGitHubToken(githubToken: string): Promise<void> {
@@ -47,6 +48,7 @@ async function run(): Promise<void> {
       force: core.getBooleanInput("force"),
       downloadDir: core.getInput("download-dir"),
       basePath: core.getInput("base-path"),
+      includeHidden: core.getBooleanInput("include-hidden"),
     };
 
     core.info("🚀 Starting Speed Docs GitHub Action");
@@ -87,6 +89,10 @@ async function run(): Promise<void> {
 
     if (inputs.basePath) {
       speedDocsCommand.push("--base-path", inputs.basePath);
+    }
+
+    if (inputs.includeHidden) {
+      speedDocsCommand.push("--include-hidden");
     }
 
     core.info(`🔨 Running speed-docs command: ${speedDocsCommand.join(" ")}`);

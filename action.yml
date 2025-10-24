@@ -26,6 +26,10 @@ inputs:
   base-path:
     description: "Base path for the documentation site"
     required: false
+  include-hidden:
+    description: "Include hidden files and directories in the documentation"
+    required: false
+    default: "false"
 
 outputs:
   output-path:
